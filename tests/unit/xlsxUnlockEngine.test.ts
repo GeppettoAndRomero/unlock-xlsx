@@ -107,4 +107,46 @@ describe('unlockXlsx', () => {
     );
     expect(unlockedFileName('macro.xlsm')).toBe('macro-unlocked.xlsx');
   });
+
+  it('rejects a file that is neither a ZIP nor a CFB container', async () => {
+    const junk = new Uint8Array([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]);
+    await expect(
+      unlockXlsx(new File([junk], 'not-a-workbook.xlsx'))
+    ).rejects.toMatchObject<AppError>({ code: 'errInvalidWorkbook' });
+  });
+
+  it('rejects a valid ZIP that has no xl/workbook.xml part', async () => {
+    const reader = new ZipReader(new BlobReader(fixtureFile()));
+    const entries = await reader.getEntries();
+    const { ZipWriter, BlobWriter, Uint8ArrayReader, Uint8ArrayWriter } =
+      await import('@zip.js/zip.js');
+    const writer = new ZipWriter(new BlobWriter('application/zip'));
+    for (const entry of entries) {
+      if (entry.filename === 'xl/workbook.xml' || entry.directory) continue;
+      const data = await entry.getData!(new Uint8ArrayWriter());
+      await writer.add(entry.filename, new Uint8ArrayReader(data));
+    }
+    const blob = await writer.close();
+    await reader.close();
+
+    await expect(
+      unlockXlsx(new File([blob], 'no-workbook.xlsx'))
+    ).rejects.toMatchObject<AppError>({ code: 'errInvalidWorkbook' });
+  });
+
+  it('rejects a ZIP-level encrypted archive as an opening-password file', async () => {
+    const { ZipWriter, BlobWriter, TextReader } = await import(
+      '@zip.js/zip.js'
+    );
+    const writer = new ZipWriter(new BlobWriter('application/zip'), {
+      password: 'secret',
+      encryptionStrength: 3,
+    });
+    await writer.add('xl/workbook.xml', new TextReader('<workbook/>'));
+    const blob = await writer.close();
+
+    await expect(
+      unlockXlsx(new File([blob], 'encrypted-entries.xlsx'))
+    ).rejects.toMatchObject<AppError>({ code: 'errOpenPasswordProtected' });
+  });
 });
