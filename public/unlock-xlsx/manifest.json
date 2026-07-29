@@ -1,0 +1,36 @@
+{
+  "name": "Remove Excel Sheet Protection \u2014 runlocally",
+  "short_name": "Unlock XLSX",
+  "description": "Remove sheet editing protection and workbook structure protection from XLSX or XLSM files in your browser.",
+  "start_url": "/unlock-xlsx/",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ],
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "scope": "/unlock-xlsx/",
+  "icons": [
+    {
+      "src": "/unlock-xlsx/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/unlock-xlsx/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": [
+    "utilities",
+    "productivity"
+  ],
+  "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
+}
